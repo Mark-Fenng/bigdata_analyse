@@ -1,6 +1,6 @@
 *.dat
 .gradle/
-.idea/workspace.xml
+.idea/
 gradle/
 gradlew
 gradlew.bat
@@ -8,3 +8,6 @@ out/
 src/main/java/test.java
 src/main/resources/
 src/test/
+build/
+bin/
+**/*.pdf
