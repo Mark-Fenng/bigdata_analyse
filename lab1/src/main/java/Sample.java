@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -21,14 +23,14 @@ public class Sample {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path("/user/mark/input"));
-        FileOutputFormat.setOutputPath(job, new Path("/user/mark/D_Sample"));
+        FileOutputFormat.setOutputPath(job, new Path("/user/mark/output"));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static class TokenizerMapper extends Mapper<LongWritable, Text, Text, Text> {
 
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            context.write(new Text(value.toString().split("|")[10]), value);
+            context.write(new Text(value.toString().split("\\|")[10]), value);
         }
     }
 
@@ -37,13 +39,19 @@ public class Sample {
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int count = 0;
+            List<Review> reviews = new ArrayList();
             for (Text t : values) {
+
                 if (count % 100 == 0) {
+
                     Review review = new Review(t.toString());
-                    if (review.validateLongitude() && review.validateLatitude())
-                        context.write(null, new Text(review.toString()));
+                    reviews.add(review);
                 }
                 count++;
+            }
+            reviews.sort((o1, o2) -> (int) (o1.getRating() - o2.getRating()));
+            for (double i = 0.01 * reviews.size(); i < 0.99 * reviews.size(); i++) {
+                context.write(null, new Text(reviews.get((int) i).toString()));
             }
         }
     }

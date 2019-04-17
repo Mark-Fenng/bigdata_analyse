@@ -14,7 +14,6 @@ public class Review {
     private String user_id;
     private String birthday;
     private String user_nationality;
-    private String category;
     private String career;
     private Double user_income;
     private static final Map<String, String> MONTHS;
@@ -35,11 +34,23 @@ public class Review {
     }
 
     Review(String record) {
-        String[] items = record.split("|");
+        String[] items = record.split("\\|");
         review_id = items[0];
-        longitude = Double.parseDouble(items[1]);
-        latitude = Double.parseDouble(items[2]);
-        altitude = Double.parseDouble(items[3]);
+        try {
+            longitude = Double.parseDouble(items[1]);
+        } catch (NumberFormatException e) {
+            longitude = null;
+        }
+        try {
+            latitude = Double.parseDouble(items[2]);
+        } catch (NumberFormatException e) {
+            latitude = null;
+        }
+        try {
+            altitude = Double.parseDouble(items[3]);
+        } catch (NumberFormatException e) {
+            altitude = null;
+        }
         review_date = standardDate(items[4]);
         temperature = standardTemperature(items[5]);
         try {
@@ -50,7 +61,7 @@ public class Review {
 
         user_id = items[7];
         birthday = standardDate(items[8]);
-        category = items[9];
+        user_nationality = items[9];
         career = items[10];
         try {
             user_income = Double.parseDouble(items[11]);
@@ -68,11 +79,11 @@ public class Review {
     }
 
     boolean validateLongitude() {
-        return longitude > 8.1461259 && longitude < 11.1993265;
+        return longitude != null && longitude > 8.1461259 && longitude < 11.1993265;
     }
 
     boolean validateLatitude() {
-        return latitude > 56.5824856 && latitude < 57.750511;
+        return latitude != null && latitude > 56.5824856 && latitude < 57.750511;
     }
 
     String standardTemperature(String temperature) {
@@ -94,7 +105,8 @@ public class Review {
     String standardDate(String date) {
         Pattern dateFormat1 = Pattern.compile("(\\d{4})/(\\d{2})/(\\d{2})");
         Pattern dateFormat2 = Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})");
-        Pattern dateFormat3 = Pattern.compile("(.*)\\s*(\\d{2}),\\s*(\\d{4})");
+        Pattern dateFormat3 = Pattern.compile("(.*)\\s+(\\d{2}),\\s*(\\d{4})");
+        Pattern dateFormat4 = Pattern.compile("(.*)\\s+(\\d{1}),\\s*(\\d{4})");
         Matcher matcher;
         matcher = dateFormat1.matcher(date);
         if (matcher.find()) {
@@ -108,6 +120,10 @@ public class Review {
         if (matcher.find()) {
             return matcher.group(3) + "-" + MONTHS.get(matcher.group(1).toLowerCase()) + "-" + matcher.group(2);
         }
+        matcher = dateFormat4.matcher(date);
+        if (matcher.find()) {
+            return matcher.group(3) + "-" + MONTHS.get(matcher.group(1).toLowerCase()) + "-0" + matcher.group(2);
+        }
         return null;
     }
 
@@ -115,10 +131,17 @@ public class Review {
         return rating / 100;
     }
 
+    /**
+     * @return the rating
+     */
+    public Double getRating() {
+        return rating;
+    }
+
     @Override
     public String toString() {
         return review_id + "|" + longitude + "|" + latitude + "|" + altitude + "|" + review_date + "|" + temperature
-                + "|" + rating + "|" + user_id + "|" + birthday + "|" + user_nationality + "|" + category + "|" + career
-                + "|" + user_income;
+                + "|" + rating + "|" + user_id + "|" + birthday + "|" + user_nationality + "|" + career + "|"
+                + user_income;
     }
 }
