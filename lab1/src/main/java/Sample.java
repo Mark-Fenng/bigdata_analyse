@@ -21,7 +21,7 @@ public class Sample {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job, new Path("/user/mark/input"));
-        FileOutputFormat.setOutputPath(job, new Path("/user/mark/output"));
+        FileOutputFormat.setOutputPath(job, new Path("/user/mark/D_Sample"));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 
@@ -39,7 +39,9 @@ public class Sample {
             int count = 0;
             for (Text t : values) {
                 if (count % 100 == 0) {
-                    context.write(null, t);
+                    Review review = new Review(t.toString());
+                    if (review.validateLongitude() && review.validateLatitude())
+                        context.write(null, new Text(review.toString()));
                 }
                 count++;
             }
