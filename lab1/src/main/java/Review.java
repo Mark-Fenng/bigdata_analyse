@@ -56,9 +56,8 @@ public class Review {
         try {
             rating = normalizeRating(Double.parseDouble(items[6]));
         } catch (NumberFormatException e) {
-            rating = 0.5;
+            rating = (double) -1;
         }
-
         user_id = items[7];
         birthday = standardDate(items[8]);
         user_nationality = items[9];
@@ -66,9 +65,8 @@ public class Review {
         try {
             user_income = Double.parseDouble(items[11]);
         } catch (NumberFormatException e) {
-            user_income = (double) 3000;
+            user_income = (double) -1;
         }
-
     }
 
     /**
@@ -76,6 +74,27 @@ public class Review {
      */
     public String getCareer() {
         return career;
+    }
+
+    /**
+     * @return the user_income
+     */
+    public Double getUser_income() {
+        return user_income;
+    }
+
+    /**
+     * @param user_income the user_income to set
+     */
+    public void setUser_income(Double user_income) {
+        this.user_income = user_income;
+    }
+
+    /**
+     * @param rating the rating to set
+     */
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 
     boolean validateLongitude() {
@@ -93,11 +112,11 @@ public class Review {
         matcher = temperatureFormat1.matcher(temperature);
         if (matcher.find()) {
             Double number = Double.parseDouble(matcher.group(1));
-            return "" + ((number - 32) / 1.8);
+            return "" + ((number - 32) / 1.8) + "℃";
         }
         matcher = temperatureFormat2.matcher(temperature);
         if (matcher.find()) {
-            return matcher.group(1);
+            return temperature;
         }
         return null;
     }

@@ -39,21 +39,34 @@ public class Sample {
         @Override
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             int count = 0;
-            List<Review> reviews = new ArrayList();
+            double ratingSum = 0, inComeSum = 0;
+            int ratingCount = 0, inComeCount = 0;
+            List<Review> reviews = new ArrayList<>();
             for (Text t : values) {
-
                 if (count % 100 == 0) {
-
                     Review review = new Review(t.toString());
                     reviews.add(review);
+                    if (review.getRating() != -1) {
+                        ratingSum += review.getRating();
+                        ratingCount += 1;
+                    }
+                    if (review.getUser_income() != -1) {
+                        inComeSum += review.getUser_income();
+                        inComeCount += 1;
+                    }
                 }
                 count++;
             }
             reviews.sort((o1, o2) -> (int) (o1.getRating() - o2.getRating()));
             for (double i = 0.01 * reviews.size(); i < 0.99 * reviews.size(); i++) {
+                if (reviews.get((int) i).getRating() == -1) {
+                    reviews.get((int) i).setRating(ratingSum / ratingCount);
+                }
+                if (reviews.get((int) i).getUser_income() == -1) {
+                    reviews.get((int) i).setUser_income(inComeSum / inComeCount);
+                }
                 context.write(null, new Text(reviews.get((int) i).toString()));
             }
         }
     }
-
 }
