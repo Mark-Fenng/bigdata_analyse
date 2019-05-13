@@ -1,0 +1,15 @@
+**/*.dat
+**/.gradle/
+**/.idea/
+**/gradle/
+**/out/
+**/src/main/java/test.java
+**/src/main/resources/
+**/src/test/
+**/build/
+**/bin/
+**/*.pdf
+**/*.project
+**/*.classpath
+**/.settings
+**/*.txt
