@@ -7,8 +7,9 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.SparkSession;
 
-public class Main {
-    private static final int MaxIteration = 100, DATA_CENTER = 3;
+public class Cluster {
+    private static final int MaxIteration = 100, DATA_CENTER = 9;
+    private static final double Deviation = 0.01;
     private static int count = 0;
 
     public static void main(String[] args) {
@@ -20,12 +21,12 @@ public class Main {
         String filePath = "./USCensus1990.data.txt";
         JavaRDD<String> fileRDD = sc.textFile(filePath);
         JavaRDD<Record> parseData = fileRDD.map(S -> new Record(S));
-        KMeans(parseData);
-        parseData.take(100).forEach(System.out::println);
+        parseData = KMeans(parseData);
+        parseData.map(r -> r.getType()).saveAsTextFile("./result");
         spark.stop();
     }
 
-    static void KMeans(JavaRDD<Record> parseData) {
+    static JavaRDD<Record> KMeans(JavaRDD<Record> parseData) {
 
         int DEGREE = parseData.first().getData().size(); // data degree num'
         // store center point
@@ -35,7 +36,7 @@ public class Main {
 
         // start iteration
         for (int i = 0; i < MaxIteration; i++) {
-            preCenters = Centers;
+            preCenters = cloneList(Centers);
             // update the current type for each record
             parseData = parseData.map(new Function<Record, Record>() {
 
@@ -46,9 +47,7 @@ public class Main {
                     int min_index = -1;
                     for (int j = 0; j < DATA_CENTER; j++) {
                         double sum = 0;
-                        for (int k = 0; k < DEGREE; k++) {
-                            sum += Math.pow(key.getData().get(k) - Centers.get(j).get(k), 2);
-                        }
+                        sum = calculateDistance1(key.getData(), Centers.get(j));
                         if (sum < min) {
                             min = sum;
                             min_index = j;
@@ -81,9 +80,42 @@ public class Main {
                     Centers.get(j).set(k, temp.get(k) / count);
                 }
             }
-            if (preCenters.equals(Centers)) {
+
+            System.out.println("iteration: " + i);
+            double temp = calculateDistance2(Centers, preCenters);
+            System.out.println("V :" + temp);
+            if (temp < Deviation) {
                 break;
             }
         }
+        return parseData;
+    }
+
+    static List<List<Double>> cloneList(List<List<Double>> inputList) {
+        List<List<Double>> result = new ArrayList<>();
+        for (int i = 0; i < inputList.size(); i++) {
+            List<Double> tempList = new ArrayList<>();
+            tempList.addAll(inputList.get(i));
+            result.add(tempList);
+        }
+        return result;
+    }
+
+    static double calculateDistance1(List<Integer> l1, List<Double> l2) {
+        double sum = 0;
+        for (int i = 0; i < l1.size(); i++) {
+            sum += Math.pow((double) l1.get(i) - (double) l2.get(i), 2);
+        }
+        return sum;
+    }
+
+    static double calculateDistance2(List<List<Double>> l1, List<List<Double>> l2) {
+        double sum = 0;
+        for (int i = 0; i < l1.size(); i++) {
+            for (int j = 0; j < l1.get(i).size(); j++) {
+                sum += Math.pow((double) l1.get(i).get(j) - (double) l2.get(i).get(j), 2);
+            }
+        }
+        return sum;
     }
 }

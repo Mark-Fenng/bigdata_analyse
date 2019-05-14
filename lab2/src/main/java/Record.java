@@ -6,7 +6,7 @@ public class Record implements Serializable {
     private static final long serialVersionUID = 1L;
     private int ID; // case id
     private List<Integer> data = new ArrayList<>(); // data list
-    private Integer type = 0; // cluster type
+    private Integer type = -2; // cluster type
     private String format = "ID: %d %s type: %d";
 
     Record(String rawRecord) {
