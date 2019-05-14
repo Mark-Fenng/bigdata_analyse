@@ -22,7 +22,7 @@ public class Cluster {
         JavaRDD<String> fileRDD = sc.textFile(filePath);
         JavaRDD<Record> parseData = fileRDD.map(S -> new Record(S));
         parseData = KMeans(parseData);
-        parseData.map(r -> r.getType()).saveAsTextFile("./result");
+        parseData.map(r -> r.getType()).repartition(1).saveAsTextFile("./result");
         spark.stop();
     }
 

@@ -2,9 +2,9 @@
     "configurations": [
         {
             "type": "java",
-            "name": "CodeLens (Launch) - Main",
+            "name": "CodeLens (Launch) - Cluster",
             "request": "launch",
-            "mainClass": "Main",
+            "mainClass": "Cluster",
             "projectName": "lab2",
             "console": "integratedTerminal"
         }
