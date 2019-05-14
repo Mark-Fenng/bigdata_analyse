@@ -5,7 +5,8 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalog.Function;
+
+import scala.Tuple2;
 
 public class Classification {
     public static void main(String[] args) {
@@ -19,8 +20,8 @@ public class Classification {
         JavaRDD<BayesRecord> dataset = fileInput.map(r -> new BayesRecord(r));
         Dataset<Row> rawData = spark.createDataFrame(dataset, BayesRecord.class);
         Dataset<Row> trainData = rawData.sample(false, 0.8, 1000);
-        Dataset<Row> testData = rawData.sample(false, 0.2, 1000);
-        prioriProbability(trainData);
+        // Dataset<Row> testData = rawData.sample(false, 0.2, 1000);
+        System.out.println(prioriProbability(trainData).toString());
         // test.takeAsList(10).forEach(System.out::println);
         // String filePath = "./USCensus1990.data.txt";
         // JavaRDD<String> fileRDD = sc.textFile(filePath);
@@ -29,8 +30,18 @@ public class Classification {
         spark.stop();
     }
 
-    static void prioriProbability(Dataset<Row> trainData) {
+    static Map<Integer, Double> prioriProbability(Dataset<Row> trainData) {
         long totalNum = trainData.count();
-        trainData.groupBy("type").count().selectExpr("type", "count/" + totalNum).show();
+        Dataset<Row> prioriProbability = trainData.groupBy("type").count().selectExpr("type", "count/" + totalNum)
+                .persist();
+        int typeNum = (int) prioriProbability.count();
+        List<Tuple2<Integer, Double>> midResult = prioriProbability.toJavaRDD()
+                .map(r -> new Tuple2<Integer, Double>((int) r.get(0), (double) r.get(1))).take(typeNum);
+        prioriProbability.unpersist();
+        HashMap<Integer, Double> Result = new HashMap<>();
+        for (Tuple2<Integer, Double> t : midResult) {
+            Result.put((int) t._1(), (double) t._2());
+        }
+        return Result;
     }
 }
