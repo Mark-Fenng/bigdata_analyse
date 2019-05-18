@@ -17,14 +17,15 @@ public class Classification {
 
         JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
         sc.setLogLevel("ERROR");
+
         String filePath = "./SUSY.csv";
-        // JavaRDD<String> fileInput = sc.textFile(filePath);
         Dataset<Row> inputData = spark.read().format("com.databricks.spark.csv").option("header", false)
                 .option("delimiter", ",").option("inferSchema", true).load(filePath);
         // inputData.printSchema();
+        // Dataset<Row> inputData = spark.read().load("./sample");
         DEGREE = inputData.columns().length - 1;
 
-        Dataset<Row> trainData = inputData.sample(false, 0.8, 1000);
+        Dataset<Row> trainData = inputData.sample(false, 0.8, 200);
         System.out.println("Start training");
         List<List<Double>> BayesModel = prioriProbability(spark, trainData);
         System.out.println("Start testing");
@@ -46,6 +47,7 @@ public class Classification {
                     }
                     r *= BayesModel.get(i).get(2 * (DEGREE + 1) - 1);
                     if (r > max) {
+                        max = r;
                         max_index = i;
                     }
                 }
