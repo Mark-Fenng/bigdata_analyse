@@ -1,12 +1,15 @@
+import java.util.*;
+
 public class Master {
     private List<Worker> Workers = new ArrayList<>();
 
     Master(int WorkersNumber) {
-        createWorker(WorkerNumber);
+        createWorker(WorkersNumber);
     }
 
-    public int allocateVertex(long vertexID) {
+    public long allocateVertex(long vertexID) {
         int WorkersNum = Workers.size();
+        return vertexID % WorkersNum;
     }
 
     private void createWorker(int N) {
@@ -17,5 +20,8 @@ public class Master {
 
     public Worker getWorker(int workerID) {
         return Workers.get(workerID);
+    }
+
+    public static void main(String[] args) {
     }
 }

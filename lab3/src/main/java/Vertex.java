@@ -1,11 +1,17 @@
+import java.util.*;
+
 public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
     final private long ID;
     private VertexValue vertexValue;
     private List<Edge> outGoingEdges;
     private boolean active;
 
+    Vertex(long vertexID) {
+        this.ID = vertexID;
+    }
+
     /**
-     * @return the iD
+     * @return the ID
      */
     public long getID() {
         return ID;
@@ -32,7 +38,7 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
         return active;
     }
 
-    public VoteToHalt(){
+    public void VoteToHalt() {
         this.active = false;
     }
 }
