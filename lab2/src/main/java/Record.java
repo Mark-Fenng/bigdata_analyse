@@ -7,12 +7,33 @@ public class Record implements Serializable {
     private int ID; // case id
     private List<Integer> data = new ArrayList<>(); // data list
     private Integer type = -2; // cluster type
+    private boolean visited = false; // show if the record node has been visited before
+    private boolean active = true;// show if the record is active for DBScan algorithm
     private String format = "ID: %d %s type: %d";
 
     Record(String rawRecord) {
         List<String> strList = Arrays.asList(rawRecord.split(","));
         this.data = strList.subList(1, strList.size()).stream().map(Integer::parseInt).collect(Collectors.toList());
         this.ID = Integer.parseInt(strList.get(0));
+    }
+
+    /**
+     * @param active the active to set
+     */
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean getActive() {
+        return this.active;
+    }
+
+    public void setVisited(boolean visited) {
+        this.visited = visited;
+    }
+
+    public boolean getVisited() {
+        return this.visited;
     }
 
     /**

@@ -8,9 +8,19 @@ import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.SparkSession;
 
 public class Cluster {
+    /**
+     * parameters for k-means
+     */
     private static final int MaxIteration = 100, DATA_CENTER = 9;
     private static final double Deviation = 0.01;
     private static int count = 0;
+
+    /**
+     * parameters for DBScan
+     */
+    private static final double EPS = 1;
+    private static final int MinPts = 100;
+    public static int typeNum = 0;
 
     public static void main(String[] args) {
         SparkSession spark = SparkSession.builder().appName("first").master("local[*]")
@@ -24,6 +34,50 @@ public class Cluster {
         parseData = KMeans(parseData);
         parseData.map(r -> r.getType()).repartition(1).saveAsTextFile("./result");
         spark.stop();
+    }
+
+    static JavaRDD<Record> DBScan(JavaRDD<Record> parseData) {
+        parseData.map(new Function<Record, Record>() {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Record call(Record key1) throws Exception {
+                if (!key1.getVisited() && key1.getActive()) {
+
+                    key1.setVisited(true);
+
+                    JavaRDD<Record> neighbors = parseData.filter(new Function<Record, Boolean>() {
+
+                        private static final long serialVersionUID = 1L;
+
+                        @Override
+                        public Boolean call(Record key2) throws Exception {
+                            if (calculateDistance3(key1.getData(), key2.getData()) < MinPts) {
+                                return true;
+                            }
+                            return false;
+                        }
+
+                    });
+                    long pointCount = neighbors.count();
+                    if (pointCount >= MinPts) {
+                        Cluster.typeNum += 1;
+                        key1.setType(Cluster.typeNum);
+
+                        // neighbors.map(f)
+                    } else {
+                        key1.setActive(false);
+                        key1.setType(-1);
+                    }
+                    return null;
+                } else {
+                    return null;
+                }
+            }
+
+        });
+        return null;
     }
 
     static JavaRDD<Record> KMeans(JavaRDD<Record> parseData) {
@@ -115,6 +169,14 @@ public class Cluster {
             for (int j = 0; j < l1.get(i).size(); j++) {
                 sum += Math.pow((double) l1.get(i).get(j) - (double) l2.get(i).get(j), 2);
             }
+        }
+        return sum;
+    }
+
+    static double calculateDistance3(List<Integer> l1, List<Integer> l2) {
+        double sum = 0;
+        for (int i = 0; i < l1.size(); i++) {
+            sum += Math.pow((double) l1.get(i) - (double) l2.get(i), 2);
         }
         return sum;
     }
