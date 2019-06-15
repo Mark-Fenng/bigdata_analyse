@@ -116,7 +116,7 @@ public class Master {
         System.out.println("The number of edges: " + NumEdges());
         System.out.println("Start running graph algorithm...");
         startNewSuperStep();
-        System.out.println("Finished graph algorithm!!!");
+        // System.out.println("Finished graph algorithm!!!");
         bufferedReader.close();
     }
 }

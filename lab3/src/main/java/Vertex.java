@@ -2,6 +2,7 @@ import java.util.*;
 
 public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
     final private long ID;
+    private Worker worker;
     private VertexValue vertexValue;
     private List<Edge<EdgeValue>> outGoingEdges = new ArrayList<>();
     private Queue<MessageValue> messageQueue1 = new LinkedList<>(), messageQueue2 = new LinkedList<>();
@@ -9,6 +10,20 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
 
     Vertex(long vertexID) {
         this.ID = vertexID;
+    }
+
+    /**
+     * @return the worker
+     */
+    public Worker getWorker() {
+        return worker;
+    }
+
+    /**
+     * @param worker the worker to set
+     */
+    public void setWorker(Worker worker) {
+        this.worker = worker;
     }
 
     /**
@@ -49,9 +64,7 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
     }
 
     public void sendMessage(long destID, MessageValue message) {
-        int workerID = Master.allocateVertex(destID);
-        Worker destWorker = Master.getWorker(workerID);
-        destWorker.getVertex(destID).receiveMessage(message);
+        worker.addQueue(destID, message);
     }
 
     /**
