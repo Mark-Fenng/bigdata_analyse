@@ -20,4 +20,11 @@ class Edge<EdgeValue> {
     public void setEdgeValue(EdgeValue edgeValue) {
         this.edgeValue = edgeValue;
     }
+
+    /**
+     * @return the targetVertex
+     */
+    public long getTargetVertexID() {
+        return targetVertex.getID();
+    }
 }
