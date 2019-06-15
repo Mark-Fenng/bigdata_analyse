@@ -5,6 +5,7 @@ import java.util.*;
 public class Master {
     private static List<Worker> Workers = new ArrayList<>();
     private static List<Boolean> WorkingFlags = new ArrayList<>();
+    private static long superStep = 0;
 
     private static int calculatingNodes = 0;
 
@@ -45,6 +46,8 @@ public class Master {
             calculatingNodes += 1;
         }
         if (checkSuperStepOver()) {
+            superStep += 1;
+            System.out.println("Super step: " + superStep);
             startNewSuperStep();
         }
     }
@@ -75,6 +78,10 @@ public class Master {
             edgesNum += Workers.get(i).getEdgesNum();
         }
         return edgesNum;
+    }
+
+    public static long SuperStep() {
+        return superStep;
     }
 
     public static void main(String[] args) throws Exception {

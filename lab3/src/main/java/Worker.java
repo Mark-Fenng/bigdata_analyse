@@ -14,7 +14,6 @@ public class Worker implements Runnable {
 
     void addVertex(Vertex newVertex) {
         if (!this.vertices.containsKey(newVertex.getID())) {
-            newVertex.setWorkerID(this.WorkerID);
             this.vertices.put(newVertex.getID(), newVertex);
         }
     }
@@ -44,8 +43,11 @@ public class Worker implements Runnable {
     }
 
     public void receiveFromMaster() {
-        Thread worker = new Thread(this);
-        worker.start();
+        if (vertices.values().stream().filter(s -> s.isActive()).count() > 0) {
+            Thread worker = new Thread(this);
+            worker.start();
+        }
+
     }
 
     @Override

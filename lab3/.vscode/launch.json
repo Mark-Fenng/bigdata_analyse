@@ -5,7 +5,8 @@
             "name": "CodeLens (Launch) - Master",
             "request": "launch",
             "mainClass": "Master",
-            "projectName": "lab3"
+            "projectName": "lab3",
+            "console": "integratedTerminal"
         }
     ]
 }
