@@ -1,22 +1,38 @@
 import java.util.*;
 
-public class Worker {
+public class Worker implements Runnable {
     private final int WorkerID;
     private Map<Long, Vertex> vertices = new HashMap<>();
-    private Map<Long, Thread> threads = new HashMap<>();
-    private int workingVertex = 0;
 
     Worker(int workerID) {
         this.WorkerID = workerID;
     }
 
+    boolean vertexExist(long vertexID) {
+        return this.vertices.containsKey(vertexID);
+    }
+
     void addVertex(Vertex newVertex) {
-        this.vertices.put(newVertex.getID(), newVertex);
-        this.threads.put(newVertex.getID(), new Thread(newVertex));
+        if (!this.vertices.containsKey(newVertex.getID())) {
+            newVertex.setWorkerID(this.WorkerID);
+            this.vertices.put(newVertex.getID(), newVertex);
+        }
+    }
+
+    void addEdge(long vertexID, Edge edge) {
+        vertices.get(vertexID).addOutGoingEdge(edge);
     }
 
     public long getVerticesNum() {
         return this.vertices.size();
+    }
+
+    public long getEdgesNum() {
+        long edgesNum = 0;
+        for (Map.Entry<Long, Vertex> entry : vertices.entrySet()) {
+            edgesNum += entry.getValue().getOutGoingEdges().size();
+        }
+        return edgesNum;
     }
 
     public Vertex getVertex(long vertexID) {
@@ -27,24 +43,18 @@ public class Worker {
         Master.receiveFromWorker(this.WorkerID);
     }
 
-    public void addWorkingThread() {
-        this.workingVertex += 1;
-    }
-
-    public void reduceWorkingThread() {
-        this.workingVertex -= 1;
-        if (workingVertex == 0) {
-            sendMessageToMaster();
-        }
-    }
-
     public void receiveFromMaster() {
+        Thread worker = new Thread(this);
+        worker.start();
+    }
+
+    @Override
+    public void run() {
         for (Map.Entry<Long, Vertex> entry : vertices.entrySet()) {
             if (entry.getValue().isActive()) {
-                threads.get(entry.getKey()).start();
-                addWorkingThread();
+                entry.getValue().runCompute();
             }
         }
+        sendMessageToMaster();
     }
-
 }

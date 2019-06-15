@@ -1,17 +1,23 @@
 import java.util.*;
 
-public abstract class Vertex<VertexValue, EdgeValue, MessageValue> implements Runnable {
+public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
     private int workerID;
     final private long ID;
     private VertexValue vertexValue;
-    private List<Edge<EdgeValue>> outGoingEdges;
+    private List<Edge<EdgeValue>> outGoingEdges = new ArrayList<>();
     private long superStep = 0;
-    private Queue<MessageValue> messageQueue1, messageQueue2;
+    private Queue<MessageValue> messageQueue1 = new LinkedList<>(), messageQueue2 = new LinkedList<>();
     private boolean odd = false;
-    private boolean active;
+    private boolean active = true;
 
-    Vertex(long vertexID, int workerID) {
+    Vertex(long vertexID) {
         this.ID = vertexID;
+    }
+
+    /**
+     * @param workerID the workerID to set
+     */
+    public void setWorkerID(int workerID) {
         this.workerID = workerID;
     }
 
@@ -50,12 +56,8 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> implements Ru
 
     public void sendMessage(long destID, MessageValue message) {
         int workerID = Master.allocateVertex(destID);
-        if (workerID == this.workerID) {
-            this.receiveMessage(message);
-        } else {
-            Worker destWorker = Master.getWorker(workerID);
-            destWorker.getVertex(destID).receiveMessage(message);
-        }
+        Worker destWorker = Master.getWorker(workerID);
+        destWorker.getVertex(destID).receiveMessage(message);
     }
 
     /**
@@ -91,8 +93,7 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> implements Ru
         }
     }
 
-    @Override
-    public void run() {
+    public void runCompute() {
         if (odd) {
             Compute(this.messageQueue1);
             this.messageQueue1.clear();
@@ -102,7 +103,6 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> implements Ru
         }
         this.superStep += 1;
         this.odd = !this.odd;
-        Master.getWorker(this.workerID).reduceWorkingThread();
     }
 
     public abstract void Compute(Queue<MessageValue> messages);

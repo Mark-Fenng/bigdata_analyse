@@ -1,10 +1,10 @@
 class Edge<EdgeValue> {
     private EdgeValue edgeValue;
-    private Vertex targetVertex;
+    private long targetVertexID;
 
-    Edge(EdgeValue value, Vertex targetVertex) {
+    Edge(EdgeValue value, long targetVertexID) {
         this.edgeValue = value;
-        this.targetVertex = targetVertex;
+        this.targetVertexID = targetVertexID;
     }
 
     /**
@@ -25,6 +25,6 @@ class Edge<EdgeValue> {
      * @return the targetVertex
      */
     public long getTargetVertexID() {
-        return targetVertex.getID();
+        return this.targetVertexID;
     }
 }
