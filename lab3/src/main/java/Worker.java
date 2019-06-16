@@ -89,8 +89,17 @@ public class Worker<MessageValue> implements Runnable {
         }
     }
 
+    synchronized public void report() {
+        for (Aggregator<Object, Object> aggregator : Master.getAggregators().values())
+            for (Vertex vertex : vertices.values()) {
+                if (aggregator.getResult() == null)
+                    aggregator.runReport(vertex);
+            }
+    }
+
     @Override
     public void run() {
+        report();
         for (Map.Entry<Long, Vertex> entry : vertices.entrySet()) {
             if (entry.getValue().isActive()) {
                 entry.getValue().runCompute();

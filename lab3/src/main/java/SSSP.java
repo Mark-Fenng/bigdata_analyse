@@ -59,8 +59,8 @@ public class SSSP extends Vertex<Integer, Integer, Integer> {
             edge.setEdgeValue(1);
             Master.addEdge(sourceVertexID, edge);
         }
-        System.out.println("The number of Vertices: " + Master.NumVertices());
-        System.out.println("The number of edges: " + Master.NumEdges());
+        // System.out.println("The number of Vertices: " + Master.NumVertices());
+        // System.out.println("The number of edges: " + Master.NumEdges());
         System.out.println("Start running graph algorithm...");
         Master.startNewSuperStep();
         // System.out.println("Finished graph algorithm!!!");

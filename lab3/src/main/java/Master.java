@@ -9,6 +9,7 @@ public class Master {
     private static long superStep = 0;
     private static int endedWorkers = 0;
     private static Combiner<Object> Combiner = null;
+    private static Map<String, Aggregator<Object, Object>> aggregators = new HashMap();
 
     private static int calculatingNodes = 0;
 
@@ -80,7 +81,15 @@ public class Master {
         return calculatingNodes == Workers.size();
     }
 
+    public static void runAggregators() {
+        for (Aggregator aggregator : aggregators.values()) {
+            if (aggregator.getResult() == null)
+                aggregator.runAggregator();
+        }
+    }
+
     public static void startNewSuperStep() {
+        runAggregators();
         calculatingNodes = 0;
         for (int i = 0; i < WorkingFlags.size(); i++) {
             WorkingFlags.set(i, true);
@@ -128,5 +137,23 @@ public class Master {
 
     public static long SuperStep() {
         return superStep;
+    }
+
+    public static void addAggregator(String name, Aggregator aggregator) {
+        aggregators.put(name, aggregator);
+    }
+
+    /**
+     * @return the aggregators
+     */
+    public static Map<String, Aggregator<Object, Object>> getAggregators() {
+        return aggregators;
+    }
+
+    /**
+     * @return the aggregators
+     */
+    public static Aggregator<Object, Object> getAggregator(String name) {
+        return aggregators.get(name);
     }
 }
