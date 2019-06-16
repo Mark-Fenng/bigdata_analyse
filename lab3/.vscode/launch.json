@@ -2,9 +2,17 @@
     "configurations": [
         {
             "type": "java",
-            "name": "CodeLens (Launch) - Master",
+            "name": "CodeLens (Launch) - SSSP",
             "request": "launch",
-            "mainClass": "Master",
+            "mainClass": "SSSP",
+            "projectName": "lab3",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - PageRank",
+            "request": "launch",
+            "mainClass": "PageRank",
             "projectName": "lab3",
             "console": "integratedTerminal"
         }

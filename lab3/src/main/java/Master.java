@@ -1,13 +1,30 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class Master {
     private static List<Worker> Workers = new ArrayList<>();
     private static List<Boolean> WorkingFlags = new ArrayList<>();
     private static long superStep = 0;
+    private static int endedWorkers = 0;
+    private static Combiner<Object> Combiner = null;
 
     private static int calculatingNodes = 0;
+
+    /**
+     * @return the combiner
+     */
+    public static Combiner<Object> getCombiner() {
+        return Combiner;
+    }
+
+    /**
+     * @param combiner the combiner to set
+     */
+    public static void setCombiner(Combiner<Object> combiner) {
+        Combiner = combiner;
+    }
 
     public static boolean vertexExist(long vertexID) {
         int workerID = allocateVertex(vertexID);
@@ -29,10 +46,17 @@ public class Master {
         return (int) (vertexID % WorkersNum);
     }
 
-    private static void createWorker(int N) {
+    public static void createWorker(int N) {
         for (int i = 0; i < N; i++) {
             Workers.add(new Worker(i));
             WorkingFlags.add(false);
+        }
+    }
+
+    synchronized public static void workerEnd() {
+        endedWorkers += 1;
+        if (endedWorkers == Workers.size()) {
+            endSuperStep();
         }
     }
 
@@ -40,7 +64,7 @@ public class Master {
         return Workers.get(workerID);
     }
 
-    public static void receiveFromWorker(int workerID) {
+    synchronized public static void receiveFromWorker(int workerID) {
         if (WorkingFlags.get(workerID)) {
             WorkingFlags.set(workerID, false);
             calculatingNodes += 1;
@@ -80,43 +104,29 @@ public class Master {
         return edgesNum;
     }
 
-    public static long SuperStep() {
-        return superStep;
+    public static void endSuperStep() {
+        try {
+            System.out.println("Finished graph algorithm!!!");
+            printVertices("./result.txt");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void main(String[] args) throws Exception {
-        Master.createWorker(3);
-
-        // Directed graph (each unordered pair of nodes is saved once): web-Google.txt
-        // Web graph from the Google programming contest, 2002
-        // Nodes: 875713 Edges: 5105039
-        // FromNodeId ToNodeId
-        String FilePath = "./web-Google.txt";
-
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(FilePath));
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            String[] edgeRecord = line.split("\\s+");
-            long sourceVertexID = Long.parseLong(edgeRecord[0]);
-            long targetVertexID = Long.parseLong(edgeRecord[1]);
-            if (!vertexExist(sourceVertexID)) {
-                PageRank sourceVertex = new PageRank(sourceVertexID);
-                sourceVertex.setVertexValue((double) 0);
-                addVertex(sourceVertex);
+    public static void printVertices(String FilePath) throws IOException {
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(FilePath));
+        String format = "vertexID= %d\tvalue= %s";
+        for (Worker worker : Workers) {
+            for (Object item : worker.getVertices().values()) {
+                Vertex vertex = (Vertex) item;
+                bufferedWriter.write(format.format(format, vertex.getID(), vertex.getVertexValue()));
+                bufferedWriter.newLine();
             }
-            if (!vertexExist(targetVertexID)) {
-                PageRank targetVertex = new PageRank(targetVertexID);
-                targetVertex.setVertexValue((double) 0);
-                addVertex(targetVertex);
-            }
-            Edge<Double> edge = new Edge(0, targetVertexID);
-            addEdge(sourceVertexID, edge);
         }
-        System.out.println("The number of Vertices: " + NumVertices());
-        System.out.println("The number of edges: " + NumEdges());
-        System.out.println("Start running graph algorithm...");
-        startNewSuperStep();
-        // System.out.println("Finished graph algorithm!!!");
-        bufferedReader.close();
+        bufferedWriter.close();
+    }
+
+    public static long SuperStep() {
+        return superStep;
     }
 }

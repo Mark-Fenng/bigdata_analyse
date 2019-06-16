@@ -2,30 +2,37 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Queue;
 
-public class PageRank extends Vertex<Double, Double, Double> {
+public class SSSP extends Vertex<Integer, Integer, Integer> {
 
-    PageRank(long vertexID) {
+    SSSP(long vertexID) {
         super(vertexID);
     }
 
     @Override
-    public void Compute(Queue<Double> messages) {
-        if (Master.SuperStep() >= 1) {
-            double sum = 0;
-            while (!messages.isEmpty()) {
-                sum += messages.remove();
+    public void Compute(Queue<Integer> messages) {
+        int minDistance = isSource() ? 0 : Integer.MAX_VALUE;
+        if (Master.SuperStep() == 0) {
+            setVertexValue(minDistance);
+            for (Edge<Integer> edge : getOutGoingEdges()) {
+                sendMessage(edge.getTargetVertexID(),
+                        minDistance == Integer.MAX_VALUE ? Integer.MAX_VALUE : minDistance + edge.getEdgeValue());
             }
-            super.setVertexValue(0.15 / Master.NumVertices() + 0.85 * sum);
         }
-        if (Master.SuperStep() < 30) {
-            final long n = getOutGoingEdges().size();
-            sendMessageToAllNeighbors(super.getVertexValue() / n);
-        } else {
-            VoteToHalt();
+        while (!messages.isEmpty()) {
+            minDistance = Math.min(minDistance, messages.remove());
         }
+        if (minDistance < getVertexValue()) {
+            setVertexValue(minDistance);
+            for (Edge<Integer> edge : getOutGoingEdges()) {
+                sendMessage(edge.getTargetVertexID(), minDistance + edge.getEdgeValue());
+            }
+        }
+        VoteToHalt();
     }
 
     public static void main(String[] args) throws Exception {
+        SSSPCombiner combiner = new SSSPCombiner();
+        Master.setCombiner(combiner);
         Master.createWorker(3);
 
         // Directed graph (each unordered pair of nodes is saved once): web-Google.txt
@@ -41,22 +48,22 @@ public class PageRank extends Vertex<Double, Double, Double> {
             long sourceVertexID = Long.parseLong(edgeRecord[0]);
             long targetVertexID = Long.parseLong(edgeRecord[1]);
             if (!Master.vertexExist(sourceVertexID)) {
-                PageRank sourceVertex = new PageRank(sourceVertexID);
-                sourceVertex.setVertexValue((double) 0);
+                SSSP sourceVertex = new SSSP(sourceVertexID);
                 Master.addVertex(sourceVertex);
             }
             if (!Master.vertexExist(targetVertexID)) {
-                PageRank targetVertex = new PageRank(targetVertexID);
-                targetVertex.setVertexValue((double) 0);
+                SSSP targetVertex = new SSSP(targetVertexID);
                 Master.addVertex(targetVertex);
             }
-            Edge<Double> edge = new Edge(0, targetVertexID);
+            Edge<Integer> edge = new Edge(1, targetVertexID);
+            edge.setEdgeValue(1);
             Master.addEdge(sourceVertexID, edge);
         }
         System.out.println("The number of Vertices: " + Master.NumVertices());
         System.out.println("The number of edges: " + Master.NumEdges());
         System.out.println("Start running graph algorithm...");
         Master.startNewSuperStep();
+        // System.out.println("Finished graph algorithm!!!");
         bufferedReader.close();
     }
 

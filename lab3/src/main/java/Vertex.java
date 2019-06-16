@@ -95,6 +95,10 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
         }
     }
 
+    public boolean isSource() {
+        return getID() == 0;
+    }
+
     public void runCompute() {
         if (Master.SuperStep() % 2 != 0) {
             Compute(this.messageQueue1);

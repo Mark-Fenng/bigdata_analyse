@@ -4,17 +4,9 @@ public class Worker<MessageValue> implements Runnable {
     private final int WorkerID;
     private Map<Long, Vertex> vertices = new HashMap<>();
     private Map<Long, Queue<MessageValue>> waitingMessages = new HashMap<>();
-    private Combiner<MessageValue> Combiner = null;
 
     Worker(int workerID) {
         this.WorkerID = workerID;
-    }
-
-    /**
-     * @param combiner the combiner to set
-     */
-    public void setCombiner(Combiner<MessageValue> combiner) {
-        Combiner = combiner;
     }
 
     boolean vertexExist(long vertexID) {
@@ -36,6 +28,13 @@ public class Worker<MessageValue> implements Runnable {
         return this.vertices.size();
     }
 
+    /**
+     * @return the vertices
+     */
+    public Map<Long, Vertex> getVertices() {
+        return vertices;
+    }
+
     public long getEdgesNum() {
         long edgesNum = 0;
         for (Map.Entry<Long, Vertex> entry : vertices.entrySet()) {
@@ -48,7 +47,7 @@ public class Worker<MessageValue> implements Runnable {
         return this.vertices.get(vertexID);
     }
 
-    public void sendMessageToMaster() {
+    synchronized public void sendMessageToMaster() {
         Master.receiveFromWorker(this.WorkerID);
     }
 
@@ -56,8 +55,9 @@ public class Worker<MessageValue> implements Runnable {
         if (vertices.values().stream().filter(s -> s.isActive()).count() > 0) {
             Thread worker = new Thread(this);
             worker.start();
+        } else {
+            Master.workerEnd();
         }
-
     }
 
     public void addQueue(long destVertexID, MessageValue message) {
@@ -70,12 +70,16 @@ public class Worker<MessageValue> implements Runnable {
         }
     }
 
-    public void sendMessage() {
+    synchronized public void sendMessage() {
         for (Map.Entry<Long, Queue<MessageValue>> entry : this.waitingMessages.entrySet()) {
             int workerID = Master.allocateVertex(entry.getKey());
             Worker<MessageValue> destWorker = Master.getWorker(workerID);
-            if (Combiner != null) {
-                destWorker.getVertex(entry.getKey()).receiveMessage(Combiner.Combine(entry.getValue()));
+            Combiner combiner = Master.getCombiner();
+            if (combiner != null) {
+                if (entry.getValue().size() != 0) {
+                    destWorker.getVertex(entry.getKey())
+                            .receiveMessage(combiner.Combine((Queue<Object>) entry.getValue()));
+                }
             } else {
                 Queue<MessageValue> value = entry.getValue();
                 while (!value.isEmpty()) {
