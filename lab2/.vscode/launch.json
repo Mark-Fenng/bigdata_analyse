@@ -5,7 +5,8 @@
             "name": "CodeLens (Launch) - Classification",
             "request": "launch",
             "mainClass": "Classification",
-            "projectName": "lab2"
+            "projectName": "lab2",
+            "console": "integratedTerminal"
         },
         {
             "type": "java",

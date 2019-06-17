@@ -1,5 +1,6 @@
 import java.util.*;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -7,6 +8,8 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
+import scala.Tuple2;
 
 public class Classification {
     static int DEGREE = 0;
@@ -17,7 +20,12 @@ public class Classification {
 
         JavaSparkContext sc = JavaSparkContext.fromSparkContext(spark.sparkContext());
         sc.setLogLevel("ERROR");
+        // NaiveByes(spark);
+        LogisticRegression(sc);
+        spark.stop();
+    }
 
+    static void NaiveByes(SparkSession spark) throws AnalysisException {
         String filePath = "./SUSY.csv";
         Dataset<Row> inputData = spark.read().format("com.databricks.spark.csv").option("header", false)
                 .option("delimiter", ",").option("inferSchema", true).load(filePath);
@@ -55,7 +63,51 @@ public class Classification {
             }
         }).reduce((a, b) -> a + b);
         System.out.println(result / (double) testTotal);
-        spark.stop();
+    }
+
+    static void LogisticRegression(JavaSparkContext sc) {
+        JavaPairRDD<Integer, Vector> data = sc.textFile("./SUSY.csv").mapToPair(s -> {
+            String[] values = s.split(", *");
+            double[] vector = new double[values.length - 1];
+            for (int i = 0; i < values.length - 1; i++) {
+                vector[i] = Double.parseDouble(values[i + 1]);
+            }
+            return new Tuple2<>((int) Double.parseDouble(values[0]), new Vector(vector));
+        });
+
+        JavaPairRDD<Integer, Vector> trainSet = data.sample(false, 0.8, 1000);
+        JavaPairRDD<Integer, Vector> testSet = data.sample(false, 0.2, 2000);
+
+        int dimension = trainSet.take(1).get(0)._2.dim();
+
+        int count = 0;
+        double delta = 1, eta = 1e-6, lambda = 1e0;
+        Vector deltaVec, W = new Vector(dimension, 0);
+        while (delta > 0.01 && count < 40) {
+            deltaVec = trainSet.map(tuple -> {
+                Vector vector = tuple._2;
+                double exp = Math.pow(Math.E, W.dot(vector));
+                return Vector.mul(vector, eta * (tuple._1 - exp / (1 + exp)));
+            }).reduce((v1, v2) -> v1.add(v2));
+
+            W.add(Vector.mul(W, eta * lambda).add(deltaVec));
+            delta = deltaVec.dot(deltaVec) / W.dot(W);
+            count++;
+            System.out.println(String.format("iteration: %d  delta: %f", count, delta));
+        }
+        System.out.println(String.format("W: %s, delta: %f", W.toString(), delta));
+
+        int correct = testSet.map(value -> {
+            double cls = W.dot(value._2);
+            if ((cls < 0 && value._1 == 0) || (cls > 0 && value._1 == 1)) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }).reduce((x, y) -> x + y);
+        double correctness = (double) correct / (double) testSet.count();
+        System.out.println(
+                String.format("correct: %d, total: %d, correctness: %f", correct, testSet.count(), correctness));
     }
 
     static List<List<Double>> prioriProbability(SparkSession spark, Dataset<Row> trainData) throws AnalysisException {

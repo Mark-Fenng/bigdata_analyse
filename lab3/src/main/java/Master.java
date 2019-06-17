@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -73,6 +75,18 @@ public class Master {
         if (checkSuperStepOver()) {
             superStep += 1;
             System.out.println("Super step: " + superStep);
+            for (Worker worker : Workers) {
+                System.out.println("Worker " + worker.getWorkerID() + " using time: " + worker.getTime());
+            }
+            for (Worker worker : Workers) {
+                System.out.println(
+                        "Worker " + worker.getWorkerID() + " sent messages number: " + worker.getSendMessagesNum());
+            }
+            for (Worker worker : Workers) {
+                System.out.println("Worker " + worker.getWorkerID() + " received messages number: "
+                        + worker.getReceiveMessagesNum());
+            }
+            System.out.println();
             startNewSuperStep();
         }
     }
@@ -135,6 +149,15 @@ public class Master {
         bufferedWriter.close();
     }
 
+    public static void printStatisticsMessage() {
+        System.out.println("Statistics message: ");
+        for (Worker worker : Workers) {
+            System.out.println("Worker ID: " + worker.getWorkerID());
+            System.out.println("Number of vertices: " + worker.getVerticesNum());
+            System.out.println("Number of edges: " + worker.getEdgesNum());
+        }
+    }
+
     public static long SuperStep() {
         return superStep;
     }
@@ -156,4 +179,48 @@ public class Master {
     public static Aggregator<Object, Object> getAggregator(String name) {
         return aggregators.get(name);
     }
+
+    public static void save() throws IOException {
+        String filePath = "./nodes/worker";
+        BufferedWriter bufferedWriter;
+        for (Worker worker : Workers) {
+            bufferedWriter = new BufferedWriter(new FileWriter(filePath + worker.getWorkerID()));
+            for (Object item : worker.getVertices().values()) {
+                Vertex vertex = (Vertex) item;
+                for (Object edge : vertex.getOutGoingEdges()) {
+                    bufferedWriter.write(String.format("%d\t%d\n", vertex.getID(), ((Edge) edge).getTargetVertexID()));
+                }
+            }
+            bufferedWriter.close();
+        }
+    }
+
+    public static void load() throws IOException {
+        String FilePath = "./nodes/worker";
+        BufferedReader bufferedReader = null;
+        for (Worker worker : Workers) {
+            bufferedReader = new BufferedReader(new FileReader(FilePath + worker.getWorkerID()));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] edgeRecord = line.split("\\s+");
+                long sourceVertexID = Long.parseLong(edgeRecord[0]);
+                long targetVertexID = Long.parseLong(edgeRecord[1]);
+                if (!Master.vertexExist(sourceVertexID)) {
+                    PageRank sourceVertex = new PageRank(sourceVertexID);
+                    sourceVertex.setVertexValue((double) 0);
+                    Master.addVertex(sourceVertex);
+                }
+                if (!Master.vertexExist(targetVertexID)) {
+                    PageRank targetVertex = new PageRank(targetVertexID);
+                    targetVertex.setVertexValue((double) 0);
+                    Master.addVertex(targetVertex);
+                }
+                Edge<Double> edge = new Edge(0, targetVertexID);
+                Master.addEdge(sourceVertexID, edge);
+            }
+            bufferedReader.close();
+        }
+    }
 }
+
+// 41909

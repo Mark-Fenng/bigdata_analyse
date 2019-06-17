@@ -52,6 +52,7 @@ public abstract class Vertex<VertexValue, EdgeValue, MessageValue> {
     }
 
     public void receiveMessage(MessageValue message) {
+        worker.vertexReceiveMessage();
         if (Master.SuperStep() % 2 != 0) {
             synchronized (messageQueue2) {
                 this.messageQueue2.offer(message);

@@ -4,9 +4,19 @@ public class Worker<MessageValue> implements Runnable {
     private final int WorkerID;
     private Map<Long, Vertex> vertices = new HashMap<>();
     private Map<Long, Queue<MessageValue>> waitingMessages = new HashMap<>();
+    private long time = 0;
+    private long sendMessagesNum = 0;
+    private long receiveMessagesNum = 0;
 
     Worker(int workerID) {
         this.WorkerID = workerID;
+    }
+
+    /**
+     * @return the workerID
+     */
+    public int getWorkerID() {
+        return WorkerID;
     }
 
     boolean vertexExist(long vertexID) {
@@ -47,6 +57,27 @@ public class Worker<MessageValue> implements Runnable {
         return this.vertices.get(vertexID);
     }
 
+    /**
+     * @return the times
+     */
+    public long getTime() {
+        return time;
+    }
+
+    /**
+     * @return the sendMessagesNum
+     */
+    public long getSendMessagesNum() {
+        return sendMessagesNum;
+    }
+
+    /**
+     * @return the receiveMessagesNum
+     */
+    public long getReceiveMessagesNum() {
+        return receiveMessagesNum;
+    }
+
     synchronized public void sendMessageToMaster() {
         Master.receiveFromWorker(this.WorkerID);
     }
@@ -70,7 +101,12 @@ public class Worker<MessageValue> implements Runnable {
         }
     }
 
-    synchronized public void sendMessage() {
+    public void vertexReceiveMessage() {
+        this.receiveMessagesNum += 1;
+    }
+
+    synchronized public long sendMessage() {
+        long sum = 0;
         for (Map.Entry<Long, Queue<MessageValue>> entry : this.waitingMessages.entrySet()) {
             int workerID = Master.allocateVertex(entry.getKey());
             Worker<MessageValue> destWorker = Master.getWorker(workerID);
@@ -79,14 +115,17 @@ public class Worker<MessageValue> implements Runnable {
                 if (entry.getValue().size() != 0) {
                     destWorker.getVertex(entry.getKey())
                             .receiveMessage(combiner.Combine((Queue<Object>) entry.getValue()));
+                    sum += 1;
                 }
             } else {
+                sum += entry.getValue().size();
                 Queue<MessageValue> value = entry.getValue();
                 while (!value.isEmpty()) {
                     destWorker.getVertex(entry.getKey()).receiveMessage(value.remove());
                 }
             }
         }
+        return sum;
     }
 
     synchronized public void report() {
@@ -99,13 +138,18 @@ public class Worker<MessageValue> implements Runnable {
 
     @Override
     public void run() {
+        this.sendMessagesNum = 0;
+        this.receiveMessagesNum = 0;
+        this.time = 0;
+        long startTime = System.currentTimeMillis();
         report();
         for (Map.Entry<Long, Vertex> entry : vertices.entrySet()) {
             if (entry.getValue().isActive()) {
                 entry.getValue().runCompute();
             }
         }
-        sendMessage();
+        this.sendMessagesNum = sendMessage();
         sendMessageToMaster();
+        this.time = System.currentTimeMillis() - startTime;
     }
 }

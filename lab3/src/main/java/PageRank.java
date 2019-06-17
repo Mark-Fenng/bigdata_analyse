@@ -18,7 +18,7 @@ public class PageRank extends Vertex<Double, Double, Double> {
             Integer result = (Integer) Master.getAggregator("NumVertices").getResult();
             super.setVertexValue(0.15 / result + 0.85 * sum);
         }
-        if (Master.SuperStep() < 30) {
+        if (Master.SuperStep() < 29) {
             final long n = getOutGoingEdges().size();
             sendMessageToAllNeighbors(super.getVertexValue() / n);
         } else {
@@ -31,7 +31,8 @@ public class PageRank extends Vertex<Double, Double, Double> {
         Aggregator<Integer, Integer> aggregator = new NumVertices();
         Master.addAggregator("NumVertices", aggregator);
 
-        // Directed graph (each unordered pair of nodes is saved once): web-Google.txt
+        // Directed graph (each unordered pair of nodes is saved once):
+        // web-Google.txt
         // Web graph from the Google programming contest, 2002
         // Nodes: 875713 Edges: 5105039
         // FromNodeId ToNodeId
@@ -58,9 +59,9 @@ public class PageRank extends Vertex<Double, Double, Double> {
         }
         // System.out.println("The number of Vertices: " + Master.NumVertices());
         // System.out.println("The number of edges: " + Master.NumEdges());
+        Master.printStatisticsMessage();
         System.out.println("Start running graph algorithm...");
         Master.startNewSuperStep();
         bufferedReader.close();
     }
-
 }
