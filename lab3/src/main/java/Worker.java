@@ -2,10 +2,18 @@ import java.util.*;
 
 public class Worker<MessageValue> implements Runnable {
     private final int WorkerID;
+    // store all vertices object
+    // the key represent the ID of vertex and the value represent the vertex
     private Map<Long, Vertex> vertices = new HashMap<>();
+    // store queues of each vertex, which has all messages waiting to be sent to
+    // other vertex
+    // key represent the ID of vertex and value represent
     private Map<Long, Queue<MessageValue>> waitingMessages = new HashMap<>();
+    // the time each super step cost
     private long time = 0;
+    // number of messages sent to other worker during each super step
     private long sendMessagesNum = 0;
+    // number of messages received during each super step
     private long receiveMessagesNum = 0;
 
     Worker(int workerID) {
@@ -78,10 +86,17 @@ public class Worker<MessageValue> implements Runnable {
         return receiveMessagesNum;
     }
 
+    /**
+     * send message to Master node to inform it that this worker has finished
+     * computing
+     */
     synchronized public void sendMessageToMaster() {
         Master.receiveFromWorker(this.WorkerID);
     }
 
+    /**
+     * receive message from Master node and start one new super step
+     */
     public void receiveFromMaster() {
         if (vertices.values().stream().filter(s -> s.isActive()).count() > 0) {
             Thread worker = new Thread(this);

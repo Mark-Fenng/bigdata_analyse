@@ -18,7 +18,7 @@ public class PageRank extends Vertex<Double, Double, Double> {
             Integer result = (Integer) Master.getAggregator("NumVertices").getResult();
             super.setVertexValue(0.15 / result + 0.85 * sum);
         }
-        if (Master.SuperStep() < 29) {
+        if (Master.SuperStep() < 30) {
             final long n = getOutGoingEdges().size();
             sendMessageToAllNeighbors(super.getVertexValue() / n);
         } else {

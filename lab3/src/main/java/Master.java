@@ -6,14 +6,22 @@ import java.io.IOException;
 import java.util.*;
 
 public class Master {
+    // store all workers
     private static List<Worker> Workers = new ArrayList<>();
+    // store flags corresponding to Workers, which indicate if each Worker has
+    // stopped running
     private static List<Boolean> WorkingFlags = new ArrayList<>();
+    // record super step number
     private static long superStep = 0;
+    // store the number of workers which have been inactive stopped running
     private static int endedWorkers = 0;
-    private static Combiner<Object> Combiner = null;
-    private static Map<String, Aggregator<Object, Object>> aggregators = new HashMap();
-
+    // store the number of workers which have stopped running
     private static int calculatingNodes = 0;
+    // store one Combiner object overridden by users
+    private static Combiner<Object> Combiner = null;
+    // store all aggregators overridden by users
+    // String means its unique name Aggregator represent its object
+    private static Map<String, Aggregator<Object, Object>> aggregators = new HashMap();
 
     /**
      * @return the combiner
@@ -158,6 +166,11 @@ public class Master {
         }
     }
 
+    /**
+     * get current super step num
+     * 
+     * @return long the super step num
+     */
     public static long SuperStep() {
         return superStep;
     }
@@ -222,5 +235,3 @@ public class Master {
         }
     }
 }
-
-// 41909

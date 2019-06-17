@@ -10,7 +10,7 @@ public class SSSP extends Vertex<Integer, Integer, Integer> {
 
     @Override
     public void Compute(Queue<Integer> messages) {
-        int minDistance = isSource() ? 0 : Integer.MAX_VALUE;
+        int minDistance = this.getID() == 0 ? 0 : Integer.MAX_VALUE;
         if (Master.SuperStep() == 0) {
             setVertexValue(minDistance);
             for (Edge<Integer> edge : getOutGoingEdges()) {
